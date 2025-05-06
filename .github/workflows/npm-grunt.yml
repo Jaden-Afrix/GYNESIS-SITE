@@ -1,0 +1,64 @@
+name: NodeJS with Grunt
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    # Step 1: Checkout the code from the repository
+    - uses: actions/checkout@v4
+
+    # Step 2: Set up Node.js using the version defined in the matrix
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # Step 3: Cache Node.js modules to speed up future builds
+    - name: Cache Node.js modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    # Step 4: Install dependencies and run linting
+    - name: Install dependencies
+      run: |
+        npm install
+
+    - name: Run Linting
+      run: |
+        npx eslint . --fix
+
+    # Step 5: Run tests (Optional)
+    - name: Run tests
+      run: |
+        npm test
+
+    # Step 6: Build the project using Grunt
+    - name: Build with Grunt
+      run: |
+        grunt
+
+    # Step 7: Deploy to GitHub Pages or any other service (e.g., Firebase Hosting, Netlify, Vercel)
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        personal_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./public
+
+    # Optional: Notify the team about successful deployment (using Slack, email, etc.)
+    # Add any additional notifications or custom steps here
+    # Example: Send a notification to Slack when deployment is successful
